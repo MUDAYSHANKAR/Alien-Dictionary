@@ -1,0 +1,102 @@
+
+!pip install graphviz -q
+
+import collections
+import graphviz
+def alienOrder(words: list[str]) -> str:
+
+    if not words:
+        return 
+    adj = collections.defaultdict(set)
+    in_degree = collections.defaultdict(int)
+    all_chars = set("".join(words))
+    for char in all_chars:
+
+        in_degree[char] = 0
+
+    for i in range(len(words) - 1):
+        word1, word2 = words[i], words[i+1]
+        min_len = min(len(word1), len(word2))
+
+        if len(word1) > len(word2) and word1.startswith(word2):
+            return 
+                    for j in range(min_len):
+            char1, char2 = word1[j], word2[j]
+            if char1 != char2:
+                if char2 not in adj[char1]:
+                    adj[char1].add(char2)
+                    in_degree[char2] += 1
+                break 
+    queue = collections.deque([c for c in in_degree if in_degree[c] == 0])
+    
+    result = []
+    while queue:
+        char = queue.popleft()
+        result.append(char)
+
+        for neighbor in sorted(list(adj[char])):
+            in_degree[neighbor] -= 1
+            if in_degree[neighbor] == 0:
+                queue.append(neighbor)
+
+    if len(result) == len(all_chars):
+        return .join(result)
+    else:
+        return 
+
+def visualize_dependency_graph(words: list[str]):
+
+    if not words:
+        print("Cannot visualize an empty word list.")
+        return
+
+    adj = collections.defaultdict(set)
+    all_chars = set("".join(words))
+
+    for i in range(len(words) - 1):
+        word1, word2 = words[i], words[i+1]
+        if len(word1) > len(word2) and word1.startswith(word2):
+            print(f"Invalid order detected: '{word2}' is a prefix of '{word1}'. Cannot create graph.")
+            return None
+        for j in range(min(len(word1), len(word2))):
+            if word1[j] != word2[j]:
+                adj[word1[j]].add(word2[j])
+                break
+
+    dot = graphviz.Digraph(comment='Alien Dictionary Character Dependencies')
+    dot.attr('node', shape='circle', style='filled', fillcolor='lightblue')
+    dot.attr('edge', color='black')
+    dot.attr(rankdir='LR', size='8,5')
+
+    for char in all_chars:
+        dot.node(char, char)
+
+    for char, neighbors in adj.items():
+        for neighbor in neighbors:
+            dot.edge(char, neighbor)
+
+    return dot
+
+test_cases = [
+    (["wrt", "wrf", "er", "ett", "rftt"], "Valid Case 1"),
+    (["z", "x"], "Valid Case 2"),
+    (["zy", "zx"], "Valid Case 3"),
+    (["z", "x", "z"], "Invalid Case (Cycle)"),
+    (["abc", "ab"], "Invalid Case (Prefix)"),
+    (["a", "b", "c"], "Simple Linear Case"),
+    (["ac","ab","b"], "Slightly more complex case")
+]
+
+for words, description in test_cases:
+    print(f"--- {description} ---")
+    print(f"Input Words: {words}")
+    
+    alphabet_order = alienOrder(words)
+    print(f"Derived Alphabet Order: '{alphabet_order}'\n")
+
+    graph = visualize_dependency_graph(words)
+    if graph:
+        print("Character Dependency Graph:")
+        display(graph)
+    
+    print("\n" + "="*50 + "\n")
